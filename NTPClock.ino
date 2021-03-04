@@ -2,16 +2,22 @@
 
 #include <WiFi.h>
 #include <Ticker.h>
+#include "auth.h"
+
 Ticker ticker;
 
+#ifdef SEG7
 const int sck = 12;
 const int sdi = 14;
 const int latch = 15;
 const int oe = 13;
 const int cds = 36; // VP=36, VN=39
 const int ledOE = 0;
+#endif
+
 bool NTPSyncFailed = false;
 
+#ifdef SEG7
 void tick()
 {
   static bool f = false;
@@ -31,6 +37,7 @@ void tick()
   }
   digitalWrite(latch, 1);
 }
+#endif
 
 static const time_t recentPastTime = 1500000000UL; // 2017/7/14 2:40:00 JST
 
@@ -47,7 +54,9 @@ WiFiManager wifiManager;
 //gets called when WiFiManager enters configuration mode
 void configModeCallback (WiFiManager *myWiFiManager) {
   //entered config mode, make led toggle faster
+#ifdef SEG7
   ticker.attach(0.2, tick);
+#endif
 }
 
 void connectWiFi()
@@ -55,7 +64,9 @@ void connectWiFi()
   //set led pin as output
   //  pinMode(BUILTIN_LED, OUTPUT);
   // start ticker with 0.5 because we start in AP mode and try to connect
+#ifdef SEG7
   ticker.attach(0.6, tick);
+#endif
 
   //reset settings - for testing
   //wifiManager.resetSettings();
@@ -71,7 +82,9 @@ void connectWiFi()
     // do something here.
   }
 
+#ifdef SEG7
   ticker.detach();
+#endif
   //keep LED on -> off
   //digitalWrite(BUILTIN_LED, HIGH);
 //  pinMode(BUILTIN_LED, INPUT);
@@ -86,19 +99,23 @@ void connectWiFi()
   WiFi.begin(WIFIAP, WIFIPW);
   if (firstTime) {
     // start ticker with 0.5 because we start in AP mode and try to connect
+#ifdef SEG7
     ticker.attach(0.6, tick);
+#endif
   }
   for (i = 0 ; WiFi.status() != WL_CONNECTED && i < waitTimeOut ; i += waitTime) {
     delay(waitTime);
   }
   if (firstTime) {
+#ifdef SEG7
     ticker.detach();
+#endif
   }
   firstTime = false;
 }
 #endif
 
-
+#ifdef SEG7
 const byte digits[] = {
   B11111100, // 0
   B01100000, // 1
@@ -120,6 +137,7 @@ const byte digits[] = {
   B10011110, // E
   B10001110, // F
 };
+#endif
 
 void NTPSync()
 {
@@ -145,11 +163,13 @@ void NTPSync()
 
 void printBrightness(unsigned b)
 {
+#ifdef SEG7
   Serial.print("Brightness = ");
   Serial.print(b);
   Serial.print(" (");
   Serial.print(map(b, 0, 4095, 5, 255));
   Serial.println(")");
+#endif
 }
 
 void setup() {
@@ -159,6 +179,7 @@ void setup() {
   configTime(9 * 3600, 0, nullptr); // set time zone as JST-9
   // The above is performed without network connection.
 
+#ifdef SEG7
   pinMode(latch, OUTPUT);
   pinMode(sck, OUTPUT);
   pinMode(sdi, OUTPUT);
@@ -184,9 +205,11 @@ void setup() {
   shiftOut(sdi, sck, LSBFIRST, 1);
   shiftOut(sdi, sck, LSBFIRST, B10011101);
   digitalWrite(latch, 1);
+#endif
   
   connectWiFi();
 
+#ifdef SEG7
   // Display "Cnd"
   digitalWrite(latch, 0);
   shiftOut(sdi, sck, LSBFIRST, B01111010);
@@ -194,12 +217,15 @@ void setup() {
   shiftOut(sdi, sck, LSBFIRST, B10011101);
   digitalWrite(latch, 1);
   delay(1000);
+#endif
 
   NTPSync();
 }
 
 void loop() {
+#ifdef SEG7
   unsigned br;
+#endif
   time_t t = 0;
   struct tm timeInfo;
   static int prevMin = -1;
@@ -208,21 +234,25 @@ void loop() {
   t = time(NULL);
   localtime_r(&t, &timeInfo);
 
+#ifdef SEG7
   // control the 7seg brightness
   br = analogRead(cds);
   // Serial.println(String(br) + " " + map(br, 0, 4095, 255, 0));
 
   ledcWrite(ledOE, map(br, 0, 4095, 256, 0)); // 256 to black out.
   // change 256 to 255 if it should display time in darkness.
+#endif
 
   if (timeInfo.tm_min != prevMin) {
     prevMin = timeInfo.tm_min;
 
+#ifdef SEG7
     digitalWrite(latch, 0);
     shiftOut(sdi, sck, LSBFIRST, digits[prevMin % 10] | (NTPSyncFailed ? 1 : 0));
     shiftOut(sdi, sck, LSBFIRST, digits[prevMin / 10]); 
     shiftOut(sdi, sck, LSBFIRST, digits[timeInfo.tm_hour % 12]);
     digitalWrite(latch, 1);
+#endif
   }
 
   delay(1000);
