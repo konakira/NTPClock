@@ -1,8 +1,13 @@
 //#define USE_WIFI_MANAGER
+#define ST7789
 
 #include <WiFi.h>
 #include <Ticker.h>
 #include "auth.h"
+#ifdef ST7789
+#include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
+#include <SPI.h>
+#endif
 
 Ticker ticker;
 
@@ -13,6 +18,10 @@ const int latch = 15;
 const int oe = 13;
 const int cds = 36; // VP=36, VN=39
 const int ledOE = 0;
+#endif
+#ifdef ST7789
+TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
+#define PADX 5
 #endif
 
 bool NTPSyncFailed = false;
@@ -102,6 +111,11 @@ void connectWiFi()
 #ifdef SEG7
     ticker.attach(0.6, tick);
 #endif
+#ifdef ST7789
+    tft.fillScreen(TFT_BLUE);
+    tft.setTextPadding(PADX); // seems no effect by this line.
+    tft.drawString("Connecting ...", PADX, tft.height() / 2 - tft.fontHeight(4) / 2, 4);
+#endif
   }
   for (i = 0 ; WiFi.status() != WL_CONNECTED && i < waitTimeOut ; i += waitTime) {
     delay(waitTime);
@@ -109,6 +123,9 @@ void connectWiFi()
   if (firstTime) {
 #ifdef SEG7
     ticker.detach();
+#endif
+#ifdef ST7789
+    tft.fillScreen(TFT_BLACK);
 #endif
   }
   firstTime = false;
@@ -206,6 +223,15 @@ void setup() {
   shiftOut(sdi, sck, LSBFIRST, B10011101);
   digitalWrite(latch, 1);
 #endif
+#ifdef ST7789
+  tft.init(); // equivalent to tft.begin();
+  tft.setRotation(1); // set it to 1 or 3 for landscape resolution
+  tft.fillScreen(TFT_BLUE);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextPadding(PADX); // seems no effect by this line.
+  tft.drawString("Connecting ...",
+		 PADX, tft.height() / 2 - tft.fontHeight(4) / 2, 4);
+#endif
   
   connectWiFi();
 
@@ -252,6 +278,14 @@ void loop() {
     shiftOut(sdi, sck, LSBFIRST, digits[prevMin / 10]); 
     shiftOut(sdi, sck, LSBFIRST, digits[timeInfo.tm_hour % 12]);
     digitalWrite(latch, 1);
+#endif
+#ifdef ST7789
+#define TFTFONT 7
+    char buf[6]; // 6 for "xx:xx"
+    tft.fillScreen(TFT_BLACK);
+    snprintf(buf, 6, "%d:%02d", timeInfo.tm_hour, timeInfo.tm_min);
+    tft.drawString(buf, tft.width() / 2 - tft.textWidth(buf, TFTFONT) / 2,
+		   tft.height() / 2 - tft.fontHeight(TFTFONT) / 2, TFTFONT);
 #endif
   }
 
