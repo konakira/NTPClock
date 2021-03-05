@@ -76,6 +76,11 @@ void connectWiFi()
 #ifdef SEG7
   ticker.attach(0.6, tick);
 #endif
+#ifdef ST7789
+  tft.fillScreen(TFT_BLUE);
+  tft.drawString("Connect to:", PADX, 0, 4);
+  tft.drawString("AutoConnectAP", PADX, tft.fontHeight(4), 4);
+#endif
 
   //reset settings - for testing
   //wifiManager.resetSettings();
