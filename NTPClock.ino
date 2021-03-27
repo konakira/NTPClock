@@ -1,13 +1,30 @@
 //#define USE_WIFI_MANAGER
+
 #define ST7789
+
+#ifdef ST7789
+#if defined(ARDUINO_M5Stick_C_Plus) || defined(ARDUINO_M5Stick_C)
+#include <M5StickCPlus.h>
+#else // !ARDUINO_M5Stick_C_Plus
+#ifdef ARDUINO_M5STACK_Core2
+#include <M5Core2.h>
+#else // !ARDUINO_M5STACK_Core2
+#include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
+#include <SPI.h>
+#endif // !ARDUINO_M5STACK_Core2
+#endif // !ARDUINO_M5Stick_C_Plus
+#endif // ST7789
+
+#if defined(ARDUINO_M5Stick_C) || defined(ARDUINO_M5Stick_C_Plus) || defined(ARDUINO_M5STACK_Core2)
+#define LCD M5.Lcd
+#else
+#undef LCD
+#define LCD tft
+#endif
 
 #include <WiFi.h>
 #include <Ticker.h>
 #include "auth.h"
-#ifdef ST7789
-#include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
-#include <SPI.h>
-#endif
 
 Ticker ticker;
 
@@ -77,9 +94,9 @@ void connectWiFi()
   ticker.attach(0.6, tick);
 #endif
 #ifdef ST7789
-  tft.fillScreen(TFT_BLUE);
-  tft.drawString("Connect to:", PADX, 0, 4);
-  tft.drawString("AutoConnectAP", PADX, tft.fontHeight(4), 4);
+  LCD.fillScreen(TFT_BLUE);
+  LCD.drawString("Connect to:", PADX, 0, 4);
+  LCD.drawString("AutoConnectAP", PADX, LCD.fontHeight(4), 4);
 #endif
 
   //reset settings - for testing
@@ -117,9 +134,9 @@ void connectWiFi()
     ticker.attach(0.6, tick);
 #endif
 #ifdef ST7789
-    tft.fillScreen(TFT_BLUE);
-    tft.setTextPadding(PADX); // seems no effect by this line.
-    tft.drawString("Connecting ...", PADX, tft.height() / 2 - tft.fontHeight(4) / 2, 4);
+    LCD.fillScreen(TFT_BLUE);
+    LCD.setTextPadding(PADX); // seems no effect by this line.
+    LCD.drawString("Connecting ...", PADX, LCD.height() / 2 - LCD.fontHeight(4) / 2, 4);
 #endif
   }
   for (i = 0 ; WiFi.status() != WL_CONNECTED && i < waitTimeOut ; i += waitTime) {
@@ -130,7 +147,7 @@ void connectWiFi()
     ticker.detach();
 #endif
 #ifdef ST7789
-    tft.fillScreen(TFT_BLACK);
+    LCD.fillScreen(TFT_BLACK);
 #endif
   }
   firstTime = false;
@@ -195,8 +212,6 @@ void printBrightness(unsigned b)
 }
 
 void setup() {
-  Serial.begin(115200);
-  Serial.println("");
 
   configTime(9 * 3600, 0, nullptr); // set time zone as JST-9
   // The above is performed without network connection.
@@ -228,14 +243,24 @@ void setup() {
   shiftOut(sdi, sck, LSBFIRST, B10011101);
   digitalWrite(latch, 1);
 #endif
+
 #ifdef ST7789
+#if defined(ARDUINO_M5Stick_C) || defined(ARDUINO_M5Stick_C_Plus) || defined(ARDUINO_M5STACK_Core2)
+  // initialize the M5StickC object
+  M5.begin();
+  delay(500);
+#else
+  // initialize TFT screen
   tft.init(); // equivalent to tft.begin();
-  tft.setRotation(1); // set it to 1 or 3 for landscape resolution
-  tft.fillScreen(TFT_BLUE);
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextPadding(PADX); // seems no effect by this line.
-  tft.drawString("Connecting ...",
-		 PADX, tft.height() / 2 - tft.fontHeight(4) / 2, 4);
+  Serial.begin(115200);
+  Serial.println("");
+#endif
+  LCD.setRotation(1); // set it to 1 or 3 for landscape resolution
+  LCD.fillScreen(TFT_BLUE);
+  LCD.setTextColor(TFT_WHITE);
+  LCD.setTextPadding(PADX); // seems no effect by this line.
+  LCD.drawString("Connecting ...",
+		 PADX, LCD.height() / 2 - LCD.fontHeight(4) / 2, 4);
 #endif
   
   connectWiFi();
@@ -287,10 +312,10 @@ void loop() {
 #ifdef ST7789
 #define TFTFONT 7
     char buf[6]; // 6 for "xx:xx"
-    tft.fillScreen(TFT_BLACK);
+    LCD.fillScreen(TFT_BLACK);
     snprintf(buf, 6, "%d:%02d", timeInfo.tm_hour, timeInfo.tm_min);
-    tft.drawString(buf, tft.width() / 2 - tft.textWidth(buf, TFTFONT) / 2,
-		   tft.height() / 2 - tft.fontHeight(TFTFONT) / 2, TFTFONT);
+    LCD.drawString(buf, LCD.width() / 2 - LCD.textWidth(buf, TFTFONT) / 2,
+		   LCD.height() / 2 - LCD.fontHeight(TFTFONT) / 2, TFTFONT);
 #endif
   }
 
