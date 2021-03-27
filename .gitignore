@@ -1,5 +1,6 @@
 # Prerequisites
 auth.h
+platformio.ini
 
 *.d
 
