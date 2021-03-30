@@ -1,17 +1,24 @@
 //#define USE_WIFI_MANAGER
+#ifdef ARDUINO_M5Stick_C
+//#define ARDUINO_M5Stick_C_Plus // just in case for M5Stick C Plus
+#endif
 
 #define ST7789
 
 #ifdef ST7789
-#if defined(ARDUINO_M5Stick_C_Plus) || defined(ARDUINO_M5Stick_C)
+#ifdef ARDUINO_M5Stick_C_Plus
 #include <M5StickCPlus.h>
 #else // !ARDUINO_M5Stick_C_Plus
+#ifdef ARDUINO_M5Stick_C
+#include <M5StickC.h>
+#else // !ARDUINO_M5Stick_C
 #ifdef ARDUINO_M5STACK_Core2
 #include <M5Core2.h>
 #else // !ARDUINO_M5STACK_Core2
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <SPI.h>
 #endif // !ARDUINO_M5STACK_Core2
+#endif // !ARDUINO_M5Stick_C
 #endif // !ARDUINO_M5Stick_C_Plus
 #endif // ST7789
 
