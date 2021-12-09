@@ -149,6 +149,24 @@ void connectWiFi()
   for (i = 0 ; WiFi.status() != WL_CONNECTED && i < waitTimeOut ; i += waitTime) {
     delay(waitTime);
   }
+  // if you are connected, print your MAC address:
+  {
+    byte mac[6];
+
+    WiFi.macAddress(mac);
+    Serial.print("MAC: ");
+    Serial.print(mac[0],HEX);
+    Serial.print(":");
+    Serial.print(mac[1],HEX);
+    Serial.print(":");
+    Serial.print(mac[2],HEX);
+    Serial.print(":");
+    Serial.print(mac[3],HEX);
+    Serial.print(":");
+    Serial.print(mac[4],HEX);
+    Serial.print(":");
+    Serial.println(mac[5],HEX);
+  }
   if (firstTime) {
 #ifdef SEG7
     ticker.detach();
