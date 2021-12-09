@@ -3,7 +3,7 @@
 //#define ARDUINO_M5Stick_C_Plus // just in case for M5Stick C Plus
 #endif
 
-#define ST7789
+#define SEG7
 
 #ifdef ST7789
 #ifdef ARDUINO_M5Stick_C_Plus
