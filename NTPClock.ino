@@ -303,7 +303,6 @@ void loop() {
   // Serial.println(String(br) + " " + map(br, 0, 4095, 255, 0));
 
   ledcWrite(ledOE, map(br, 0, 4095, 256, 0)); // 256 to black out.
-  // change 256 to 255 if it should display time in darkness.
 #endif
 
   if (timeInfo.tm_min != prevMin) {
